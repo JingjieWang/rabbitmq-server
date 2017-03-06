@@ -14,7 +14,7 @@
 %% Copyright (c) 2011-2016 Pivotal Software, Inc.  All rights reserved.
 %%
 
--module(unit_inbroker_SUITE).
+-module(unit_inbroker_non_parallel_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
 -include_lib("kernel/include/file.hrl").
@@ -30,83 +30,13 @@
 
 -define(CLEANUP_QUEUE_NAME, <<"cleanup-queue">>).
 
--define(VARIABLE_QUEUE_TESTCASES, [
-    variable_queue_dynamic_duration_change,
-    variable_queue_partial_segments_delta_thing,
-    variable_queue_all_the_bits_not_covered_elsewhere_A,
-    variable_queue_all_the_bits_not_covered_elsewhere_B,
-    variable_queue_drop,
-    variable_queue_fold_msg_on_disk,
-    variable_queue_dropfetchwhile,
-    variable_queue_dropwhile_varying_ram_duration,
-    variable_queue_fetchwhile_varying_ram_duration,
-    variable_queue_ack_limiting,
-    variable_queue_purge,
-    variable_queue_requeue,
-    variable_queue_requeue_ram_beta,
-    variable_queue_fold,
-    variable_queue_batch_publish,
-    variable_queue_batch_publish_delivered
-  ]).
-
--define(BACKING_QUEUE_TESTCASES, [
-    bq_queue_index,
-    bq_queue_index_props,
-    {variable_queue_default, [], ?VARIABLE_QUEUE_TESTCASES},
-    {variable_queue_lazy, [], ?VARIABLE_QUEUE_TESTCASES ++
-                              [variable_queue_mode_change]},
-    bq_variable_queue_delete_msg_store_files_callback,
-    bq_queue_recover
-  ]).
-
--define(CLUSTER_TESTCASES, [
-    delegates_async,
-    delegates_sync,
-    queue_cleanup,
-    declare_on_dead_queue,
-    refresh_events
-  ]).
-
 all() ->
     [
-      {group, parallel_tests},
-      {group, non_parallel_tests},
-      {group, backing_queue_tests},
-      {group, cluster_tests},
-
-      {group, disconnect_detected_during_alarm},
-      {group, list_consumers_sanity_check},
-      {group, list_queues_online_and_offline}
+      {group, non_parallel_tests}
     ].
 
 groups() ->
     [
-      {parallel_tests, [parallel], [
-          amqp_connection_refusal,
-          configurable_server_properties,
-          confirms,
-          credit_flow_settings,
-          dynamic_mirroring,
-          gen_server2_with_state,
-          list_operations_timeout_pass,
-          mcall,
-          {password_hashing, [], [
-              password_hashing,
-              change_password
-            ]},
-          {policy_validation, [parallel, {repeat, 20}], [
-              ha_policy_validation,
-              policy_validation,
-              policy_opts_validation,
-              queue_master_location_policy_validation,
-              queue_modes_policy_validation,
-              vhost_removed_while_updating_policy
-            ]},
-          runtime_parameters,
-          set_disk_free_limit_command,
-          topic_matching,
-          user_management
-        ]},
       {non_parallel_tests, [], [
           app_management, %% Restart RabbitMQ.
           channel_statistics, %% Expect specific statistics.
@@ -118,36 +48,8 @@ groups() ->
           memory_high_watermark, %% Trigger alarm.
           rotate_logs_without_suffix, %% Check log files.
           server_status %% Trigger alarm.
-        ]},
-      {backing_queue_tests, [], [
-          msg_store,
-          {backing_queue_embed_limit_0, [], ?BACKING_QUEUE_TESTCASES},
-          {backing_queue_embed_limit_1024, [], ?BACKING_QUEUE_TESTCASES}
-        ]},
-      {cluster_tests, [], [
-          {from_cluster_node1, [], ?CLUSTER_TESTCASES},
-          {from_cluster_node2, [], ?CLUSTER_TESTCASES}
-        ]},
-
-      %% Test previously executed with the multi-node target.
-      {disconnect_detected_during_alarm, [], [
-          disconnect_detected_during_alarm %% Trigger alarm.
-        ]},
-      {list_consumers_sanity_check, [], [
-          list_consumers_sanity_check
-        ]},
-      {list_queues_online_and_offline, [], [
-          list_queues_online_and_offline %% Stop node B.
         ]}
     ].
-
-group(backing_queue_tests) ->
-    [
-      %% Several tests based on lazy queues may take more than 30 minutes.
-      {timetrap, {hours, 1}}
-    ];
-group(_) ->
-    [].
 
 %% -------------------------------------------------------------------
 %% Testsuite setup/teardown.
